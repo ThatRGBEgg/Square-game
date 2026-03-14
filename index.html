@@ -49,13 +49,12 @@
         
         svg:active { transform: scale(0.9); }
 
-        /* Active State for Shuffle/Repeat */
         .active-mode { color: #00ffff !important; text-shadow: 0 0 10px rgba(0, 255, 255, 0.5); }
 
         /* 1. Header */
         .header {
             display: flex;
-            justify-content: space-between;
+            justify-content: center; /* Centered since we removed the side icons */
             align-items: center;
             font-size: 0.85rem;
             text-transform: uppercase;
@@ -163,7 +162,6 @@
         }
         .play-pause svg { width: 36px; height: 36px; fill: #000; }
         
-        /* Repeat One Badge */
         #repeat-one-badge {
             display: none;
             position: absolute;
@@ -180,15 +178,41 @@
             right: -2px;
         }
 
-        /* 6. Footer */
+        /* 6. Footer & Volume */
         .footer {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             margin-top: auto;
             padding-top: 20px;
             color: rgba(255, 255, 255, 0.6);
         }
-        .footer svg { width: 24px; height: 24px; }
+        .footer svg { width: 20px; height: 20px; }
+        
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 50%;
+        }
+        #volume-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            outline: none;
+        }
+        #volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #00ffff;
+            cursor: pointer;
+            box-shadow: 0 0 10px #00ffff;
+        }
     </style>
 </head>
 <body>
@@ -197,10 +221,9 @@
     <input type="file" id="folder-input" webkitdirectory directory multiple accept="audio/*" style="display: none;">
 
     <div class="player-container">
+        
         <div class="header">
-            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
             <div class="header-title">Playing from Local Nebula</div>
-            <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
         </div>
 
         <div class="album-art-area">
@@ -243,10 +266,15 @@
         </div>
 
         <div class="footer">
-            <div id="btn-load-folder" title="Load Folder" style="cursor: pointer;">
+            <div id="btn-load-folder" title="Load Folder" style="cursor: pointer; display: flex; align-items: center; gap: 8px;">
                 <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
+                <span style="font-size: 0.8rem;">Load Files</span>
             </div>
-            <svg viewBox="0 0 24 24"><path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/></svg>
+            
+            <div class="volume-container">
+                <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1">
+            </div>
         </div>
     </div>
 
@@ -254,6 +282,7 @@
         const audioPlayer = document.getElementById('audio-player');
         const folderInput = document.getElementById('folder-input');
         const btnLoadFolder = document.getElementById('btn-load-folder');
+        const volumeSlider = document.getElementById('volume-slider');
         
         const trackTitle = document.getElementById('track-title');
         const trackArtist = document.getElementById('track-artist');
@@ -282,6 +311,11 @@
         
         let isShuffle = false;
         let repeatMode = 0; 
+
+        // -- Volume Logic --
+        volumeSlider.addEventListener('input', (e) => {
+            audioPlayer.volume = e.target.value;
+        });
 
         // -- OS MEDIA SESSION SETUP --
         if ('mediaSession' in navigator) {
@@ -376,12 +410,10 @@
                             defaultArtIcon.style.display = 'none';
                         }
                         
-                        // Send data to iOS/Android
                         updateOSPlayer(currentTitle, currentArtist, currentAlbum, currentArtUrl);
                     },
                     onError: function(error) {
                         console.log("No ID3 tags found.");
-                        // Send default data to iOS/Android if extraction fails
                         updateOSPlayer(currentTitle, currentArtist, currentAlbum, null);
                     }
                 });
